@@ -1,4 +1,4 @@
-public class CustomerCommandHandler : CommandHandler<CustomerAggregate, CustomerSnapshot>
+/*public class CustomerCommandHandler : CommandHandler<CustomerAggregate, CustomerSnapshot>
 {
     public CustomerCommandHandler(IEventStore eventStore, ISnapshotStore<CustomerSnapshot> snapshotStore)
         : base(eventStore, snapshotStore) { }
@@ -15,7 +15,7 @@ public class CustomerCommandHandler : CommandHandler<CustomerAggregate, Customer
     protected override CustomerAggregate FromSnapshot(CustomerSnapshot snapshot, string id)
     {
         var agg = new CustomerAggregate(id);
-        agg.Apply(new CustomerCreated { Id = snapshot.Id, Name = snapshot.Name });
+        agg.Apply(new CustomerCreated(snapshot.Id, snapshot.Name));
         return agg;
     }
 
@@ -23,4 +23,4 @@ public class CustomerCommandHandler : CommandHandler<CustomerAggregate, Customer
     {
         return new CustomerAggregate(id);
     }
-}
+}*/

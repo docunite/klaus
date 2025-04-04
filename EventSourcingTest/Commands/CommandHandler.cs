@@ -1,40 +1,64 @@
+/*
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
-public abstract class CommandHandler<TAggregate, TSnapShot>
-    where TAggregate : AggregateRoot
+public abstract class CommandHandler<TAggregate>(IDataStoreCache dataStoreCache)
+    where TAggregate : RootAggregate
 {
-    private readonly IEventStore _eventStore;
-    private readonly ISnapshotStore<TSnapShot> _snapshotStore;
-
-    protected CommandHandler(IEventStore eventStore, ISnapshotStore<TSnapShot> snapshotStore)
+    private async void QueueSaveSnapshot(TAggregate agg, TenantName tenantName, int version, string key)
     {
-        _eventStore = eventStore;
-        _snapshotStore = snapshotStore;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var json = SnapshotSerializer.Serialize(agg);
+                await dataStoreCache.GetAggregateSnapShotStore(tenantName)
+                    .SaveRaw(json, agg.Id, version);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Snapshot error: {ex.Message}");
+            }
+            finally
+            {
+                await ConcurrentOperationQueue.ReleaseLockWithDelay(key);
+            }
+        });
     }
 
-    protected abstract TSnapShot ToSnapshot(TAggregate aggregate);
-    protected abstract TAggregate FromSnapshot(TSnapShot snapshot, string id);
-    protected abstract TAggregate CreateEmpty(string id);
-
-    public async Task UnitOfWork(string streamId, Func<TAggregate, Task> action)
+    protected async Task UnitOfWork(DomainCommand command, string id, Func<TAggregate, Task> unitAction)
     {
-        var snapshot = _snapshotStore.Get(streamId, out var version);
-        var aggregate = version == -1 ? CreateEmpty(streamId) : FromSnapshot(snapshot, streamId);
+        if (command.TenantName == null)
+            throw new Exception("Tenant is not set.");
 
-        var (events, latestVersion) = await _eventStore.GetEvents(streamId, version);
-        foreach (var e in events) aggregate.Apply(e);
+        var eventStore = dataStoreCache.GetEventStore(command.TenantName);
 
-        await action(aggregate);
-
-        if (aggregate.CollectedEvents.Any())
-            await _eventStore.SaveEvents(streamId, aggregate.CollectedEvents, ++latestVersion);
-
-        if (events.Count > 3)
+        await LockHelper.LockAsync(command.TenantName.Value, id, async () =>
         {
-            var snap = ToSnapshot(aggregate);
-            await _snapshotStore.Save(snap, streamId, latestVersion);
-        }
+            var snapStore = dataStoreCache.GetAggregateSnapShotStore(command.TenantName);
+            var raw = snapStore.GetRaw<TAggregate>(id, out var version);
+
+            TAggregate aggregate = (TAggregate)Activator.CreateInstance(typeof(TAggregate), id)!;
+
+            if (raw is not null)
+                SnapshotSerializer.DeserializeInto(aggregate, raw);
+
+            var (events, currentVersion) = await eventStore.GetEvents(id, version);
+            if (events.Any())
+            {
+                new OnDemandRehydrator(aggregate).Rehydrate(events);
+                version = currentVersion;
+            }
+
+            await unitAction(aggregate);
+
+            if (aggregate.CollectedEvents.Count > 0)
+                await eventStore.SaveEvents(aggregate.Id, aggregate.CollectedEvents, ++version);
+
+            var key = $"aggregate-{command.TenantName}_{typeof(TAggregate).FullName}_{id}";
+            if (events.Count > 5 && !ConcurrentOperationQueue.TryAcquireLock(key))
+                QueueSaveSnapshot(aggregate, command.TenantName, version, key);
+        });
     }
 }
+*/

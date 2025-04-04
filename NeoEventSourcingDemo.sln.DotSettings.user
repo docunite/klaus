@@ -1,7 +1,7 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=0954d031_002Df981_002D4eeb_002Daabe_002Dc34b5f002451/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="Session" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
-    &lt;TestId&gt;xUnit::11111111-1111-1111-1111-111111111111::net8.0::ObjectConverterTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::11111111-1111-1111-1111-111111111111::net8.0::EventSourcingTest.SnapshotTests.Should_Serialize_And_Deserialize_CustomerAggregate_Using_PersistedAttribute&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=098ce45e_002Db768_002D4d49_002Da734_002D8d08bcda7db3/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="Should_Serialize_And_Deserialize_ValueObject_And_Identity" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;

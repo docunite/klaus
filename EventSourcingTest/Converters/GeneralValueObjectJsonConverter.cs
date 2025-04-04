@@ -10,36 +10,26 @@ public class GeneralValueObjectJsonConverter<TVO> : JsonConverter<TVO>
 {
     public override TVO? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        var jsonDoc = JsonDocument.ParseValue(ref reader);
-        var root = jsonDoc.RootElement;
+        var valueType = typeof(TVO).BaseType?.GetGenericArguments()[0];
+        if (valueType == null)
+            throw new JsonException($"Could not determine value type for {typeof(TVO).Name}");
 
-        var ctors = typeof(TVO).GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        foreach (var ctor in ctors.OrderBy(c => c.GetParameters().Length))
-        {
-            var parameters = ctor.GetParameters();
-            var args = new object?[parameters.Length];
-            var success = true;
+        var value = JsonSerializer.Deserialize(ref reader, valueType, options);
+        var ctor = typeof(TVO).GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new[] { valueType }, null);
+        
+        if (ctor == null)
+            throw new JsonException($"No matching constructor found for type {typeof(TVO).Name}");
 
-            for (int i = 0; i < parameters.Length; i++)
-            {
-                if (!root.TryGetProperty(parameters[i].Name!, out var prop))
-                {
-                    success = false;
-                    break;
-                }
-
-                args[i] = prop.Deserialize(parameters[i].ParameterType, options);
-            }
-
-            if (success)
-                return (TVO?)ctor.Invoke(args);
-        }
-
-        throw new JsonException($"No matching constructor for type {typeof(TVO).Name}");
+        return (TVO?)ctor.Invoke(new[] { value });
     }
 
     public override void Write(Utf8JsonWriter writer, TVO value, JsonSerializerOptions options)
     {
-        JsonSerializer.Serialize(writer, value, value.GetType(), options);
+        var valueProperty = value.GetType().GetProperty("Value");
+        if (valueProperty == null)
+            throw new JsonException($"Value property not found on type {typeof(TVO).Name}");
+            
+        var propertyValue = valueProperty.GetValue(value);
+        JsonSerializer.Serialize(writer, propertyValue, options);
     }
 }

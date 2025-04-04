@@ -27,8 +27,8 @@ public static class ObjectConverterEngine
             PropertyNameCaseInsensitive = true,
             Converters =
             {
-                new ValueObjectJsonConverterFactory(),      // ✅ Factory für GeneralValueObjectJsonConverter<T>
-                new IdentityJsonConverterFactory()          // 🔁 für Id-Objekte wie CustomerId, etc.
+                new ValueObjectJsonConverterFactory(),  
+                new IdentityJsonConverterFactory()          
             }
         };
     }
