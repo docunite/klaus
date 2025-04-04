@@ -1,6 +1,7 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using EventSourcingTest.Converters;
 
 public static class ObjectConverterEngine
 {
@@ -26,8 +27,8 @@ public static class ObjectConverterEngine
             PropertyNameCaseInsensitive = true,
             Converters =
             {
-                new GeneralValueObjectJsonConverter(),
-                new IdentityJsonConverterFactory()
+                new ValueObjectJsonConverterFactory(),      // ✅ Factory für GeneralValueObjectJsonConverter<T>
+                new IdentityJsonConverterFactory()          // 🔁 für Id-Objekte wie CustomerId, etc.
             }
         };
     }

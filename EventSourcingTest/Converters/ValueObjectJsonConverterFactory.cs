@@ -1,49 +1,20 @@
 using System;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Reflection;
 
-public class GeneralValueObjectJsonConverter<TVO> : JsonConverter<TVO>
+namespace EventSourcingTest.Converters;
+
+public class ValueObjectJsonConverterFactory : JsonConverterFactory
 {
-    public override TVO? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override bool CanConvert(Type typeToConvert)
     {
-        var jsonDoc = JsonDocument.ParseValue(ref reader);
-        var jsonElement = jsonDoc.RootElement;
-
-        // Versuche alle Konstruktoren (public + non-public)
-        var ctors = typeof(TVO).GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-        foreach (var ctor in ctors.OrderBy(c => c.GetParameters().Length))
-        {
-            var parameters = ctor.GetParameters();
-            var args = new object?[parameters.Length];
-            var success = true;
-
-            for (int i = 0; i < parameters.Length; i++)
-            {
-                var p = parameters[i];
-                if (!jsonElement.TryGetProperty(p.Name!, out var prop))
-                {
-                    success = false;
-                    break;
-                }
-
-                var val = prop.Deserialize(p.ParameterType, options);
-                args[i] = val;
-            }
-
-            if (success)
-            {
-                return (TVO?)ctor.Invoke(args);
-            }
-        }
-
-        throw new JsonException($"No matching constructor found for {typeof(TVO).Name}");
+        return typeToConvert.BaseType is { IsGenericType: true } &&
+               typeToConvert.BaseType.GetGenericTypeDefinition() == typeof(ValueObject<>);
     }
 
-    public override void Write(Utf8JsonWriter writer, TVO value, JsonSerializerOptions options)
+    public override JsonConverter? CreateConverter(Type type, JsonSerializerOptions options)
     {
-        JsonSerializer.Serialize(writer, value, value.GetType(), options);
+        var converterType = typeof(GeneralValueObjectJsonConverter<>).MakeGenericType(type);
+        return Activator.CreateInstance(converterType) as JsonConverter;
     }
 }

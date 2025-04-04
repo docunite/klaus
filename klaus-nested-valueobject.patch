@@ -1,0 +1,172 @@
+From ef7e1d65037f398b3b259616782e3763d4dacb69 Mon Sep 17 00:00:00 2001
+From: GPT Bot <gpt@example.com>
+Date: Fri, 4 Apr 2025 10:20:53 +0000
+Subject: [PATCH] feat: add nested ValueObject converter and test
+
+---
+ .../GeneralValueObjectJsonConverter.cs        | 43 +++++++++++++++++++
+ .../ValueObjectJsonConverterFactory.cs        | 19 ++++++++
+ EventSourcingTest/Domain/Credits.cs           |  6 +++
+ EventSourcingTest/Domain/CreditsBalance.cs    | 16 +++++++
+ EventSourcingTest/Domain/LimitThreshold.cs    |  6 +++
+ .../Tests/ValueObjectSerializationTests.cs    | 17 ++++++++
+ 6 files changed, 107 insertions(+)
+ create mode 100644 EventSourcingTest/Converters/GeneralValueObjectJsonConverter.cs
+ create mode 100644 EventSourcingTest/Converters/ValueObjectJsonConverterFactory.cs
+ create mode 100644 EventSourcingTest/Domain/Credits.cs
+ create mode 100644 EventSourcingTest/Domain/CreditsBalance.cs
+ create mode 100644 EventSourcingTest/Domain/LimitThreshold.cs
+ create mode 100644 EventSourcingTest/Tests/ValueObjectSerializationTests.cs
+
+diff --git a/EventSourcingTest/Converters/GeneralValueObjectJsonConverter.cs b/EventSourcingTest/Converters/GeneralValueObjectJsonConverter.cs
+new file mode 100644
+index 0000000..8921da4
+--- /dev/null
++++ b/EventSourcingTest/Converters/GeneralValueObjectJsonConverter.cs
+@@ -0,0 +1,43 @@
++using System.Text.Json;
++using System.Text.Json.Serialization;
++using System.Reflection;
++
++namespace EventSourcingTest.Converters;
++
++public class GeneralValueObjectJsonConverter<TVO> : JsonConverter<TVO>
++{
++    public override TVO? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
++    {
++        var jsonDoc = JsonDocument.ParseValue(ref reader);
++        var root = jsonDoc.RootElement;
++
++        var ctors = typeof(TVO).GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
++        foreach (var ctor in ctors.OrderBy(c => c.GetParameters().Length))
++        {
++            var parameters = ctor.GetParameters();
++            var args = new object?[parameters.Length];
++            var success = true;
++
++            for (int i = 0; i < parameters.Length; i++)
++            {
++                if (!root.TryGetProperty(parameters[i].Name!, out var prop))
++                {
++                    success = false;
++                    break;
++                }
++
++                args[i] = prop.Deserialize(parameters[i].ParameterType, options);
++            }
++
++            if (success)
++                return (TVO?)ctor.Invoke(args);
++        }
++
++        throw new JsonException($"No matching constructor for type {typeof(TVO).Name}");
++    }
++
++    public override void Write(Utf8JsonWriter writer, TVO value, JsonSerializerOptions options)
++    {
++        JsonSerializer.Serialize(writer, value, value.GetType(), options);
++    }
++}
+\ No newline at end of file
+diff --git a/EventSourcingTest/Converters/ValueObjectJsonConverterFactory.cs b/EventSourcingTest/Converters/ValueObjectJsonConverterFactory.cs
+new file mode 100644
+index 0000000..92407a3
+--- /dev/null
++++ b/EventSourcingTest/Converters/ValueObjectJsonConverterFactory.cs
+@@ -0,0 +1,19 @@
++using System.Text.Json;
++using System.Text.Json.Serialization;
++
++namespace EventSourcingTest.Converters;
++
++public class ValueObjectJsonConverterFactory : JsonConverterFactory
++{
++    public override bool CanConvert(Type typeToConvert)
++    {
++        return typeToConvert.BaseType is { IsGenericType: true } &&
++               typeToConvert.BaseType.GetGenericTypeDefinition() == typeof(ValueObject<>);
++    }
++
++    public override JsonConverter? CreateConverter(Type type, JsonSerializerOptions options)
++    {
++        var converterType = typeof(GeneralValueObjectJsonConverter<>).MakeGenericType(type);
++        return (JsonConverter?)Activator.CreateInstance(converterType);
++    }
++}
+\ No newline at end of file
+diff --git a/EventSourcingTest/Domain/Credits.cs b/EventSourcingTest/Domain/Credits.cs
+new file mode 100644
+index 0000000..4258494
+--- /dev/null
++++ b/EventSourcingTest/Domain/Credits.cs
+@@ -0,0 +1,6 @@
++namespace EventSourcingTest.Domain;
++
++public class Credits : IntValueObject
++{
++    public Credits(int value) : base(value) { }
++}
+\ No newline at end of file
+diff --git a/EventSourcingTest/Domain/CreditsBalance.cs b/EventSourcingTest/Domain/CreditsBalance.cs
+new file mode 100644
+index 0000000..8b4737f
+--- /dev/null
++++ b/EventSourcingTest/Domain/CreditsBalance.cs
+@@ -0,0 +1,16 @@
++namespace EventSourcingTest.Domain;
++
++public class CreditsBalance : IntValueObject
++{
++    private readonly LimitThreshold limitThreshold;
++
++    public CreditsBalance(int value, LimitThreshold limitThreshold) : base(value)
++    {
++        this.limitThreshold = limitThreshold;
++    }
++
++    public LimitThreshold LimitThreshold => limitThreshold;
++
++    public CreditsBalance Add(Credits credits) => new CreditsBalance(Value + credits.Value, limitThreshold);
++    public CreditsBalance Subtract(Credits credits) => new CreditsBalance(Value - credits.Value, limitThreshold);
++}
+\ No newline at end of file
+diff --git a/EventSourcingTest/Domain/LimitThreshold.cs b/EventSourcingTest/Domain/LimitThreshold.cs
+new file mode 100644
+index 0000000..61f9c66
+--- /dev/null
++++ b/EventSourcingTest/Domain/LimitThreshold.cs
+@@ -0,0 +1,6 @@
++namespace EventSourcingTest.Domain;
++
++public class LimitThreshold : IntValueObject
++{
++    public LimitThreshold(int value) : base(value) { }
++}
+\ No newline at end of file
+diff --git a/EventSourcingTest/Tests/ValueObjectSerializationTests.cs b/EventSourcingTest/Tests/ValueObjectSerializationTests.cs
+new file mode 100644
+index 0000000..da775fa
+--- /dev/null
++++ b/EventSourcingTest/Tests/ValueObjectSerializationTests.cs
+@@ -0,0 +1,17 @@
++using Xunit;
++using EventSourcingTest.Domain;
++
++namespace EventSourcingTest.Tests;
++
++public class ValueObjectSerializationTests
++{
++    [Fact]
++    public void Should_Serialize_And_Deserialize_Nested_ValueObject()
++    {
++        var original = new CreditsBalance(100, new LimitThreshold(50));
++        var json = ObjectConverterEngine.Serialize(original);
++        var restored = ObjectConverterEngine.Deserialize<CreditsBalance>(json);
++        Assert.Equal(original.Value, restored!.Value);
++        Assert.Equal(original.LimitThreshold.Value, restored.LimitThreshold.Value);
++    }
++}
+\ No newline at end of file
+-- 
+2.39.2
+
