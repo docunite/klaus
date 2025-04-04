@@ -20,7 +20,7 @@ namespace EventSourcingTest.Converters;
             return JsonSerializer.Deserialize<T>(json, JsonOptions());
         }
 
-        private static JsonSerializerOptions JsonOptions()
+        public static JsonSerializerOptions JsonOptions()
         {
             return new JsonSerializerOptions
             {

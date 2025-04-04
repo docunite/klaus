@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
+using EventSourcingTest.Converters;
 
 namespace EventSourcingTest.Snapshots;
 
@@ -34,7 +35,7 @@ public static class SnapshotSerializer
             if (values.TryGetValue(member.Name, out var element))
             {
                 var memberType = GetMemberType(member);
-                var value = element.Deserialize(memberType);
+                var value = element.Deserialize(memberType, ObjectConverterEngine.JsonOptions());
                 SetValue(target, member, value);
             }
         }

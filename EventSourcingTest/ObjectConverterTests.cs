@@ -48,7 +48,7 @@ public class ObjectConverterTests
         var json = ObjectConverterEngine.Serialize(original);
         var restored = ObjectConverterEngine.Deserialize<CreditsBalance>(json);
         Assert.Equal(original.Value, restored!.Value);
-        Assert.Equal(original.LimitThreshold.Value, restored.LimitThreshold.Value);
+        Assert.Equal(original.TheLimit.Value, restored.TheLimit.Value);
     }
     [Fact]
     public void Should_Serialize_And_Deserialize_ValueObject_And_Identity()
