@@ -21,8 +21,9 @@ public static class SnapshotSerializer
             dict[member.Name] = value;
         }
 
-        return JsonSerializer.Serialize(dict);
+        return JsonSerializer.Serialize(dict, ObjectConverterEngine.JsonOptions());
     }
+
 
     public static void DeserializeInto(object target, string json)
     {

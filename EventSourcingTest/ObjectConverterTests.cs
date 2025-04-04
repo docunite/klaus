@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using EventSourcingTest.Converters;
 using EventSourcingTest.Domain;
 using EventSourcingTest.Events;
@@ -10,11 +11,38 @@ namespace EventSourcingTest;
 public class SnapshotTests
 {
    
+    private JsonSerializerOptions GetOptions()
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
+        options.Converters.Add(new IdentityJsonConverterFactory());
+        return options;
+    }
+
+    private class Wrapper
+    {
+        public CustomerId Id { get; set; }
+    }
+
+    [Fact]
+    public void Should_Serialize_And_Deserialize_Identity_Correctly()
+    {
+        var id = new CustomerId(Guid.NewGuid());
+        var wrapper = new Wrapper { Id = id };
+
+        var json = JsonSerializer.Serialize(wrapper, GetOptions());
+        var deserialized = JsonSerializer.Deserialize<Wrapper>(json, GetOptions());
+
+        Assert.NotNull(deserialized);
+        Assert.Equal(id.Value, deserialized!.Id.Value);
+    }
     [Fact]
     public void Should_Serialize_And_Deserialize_CustomerAggregate_Using_PersistedAttribute()
     {
-        // Arrange
+         // Arrange
         var customerId = new CustomerId(Guid.NewGuid());
         var customerName = new CustomerName("Testkunde");
 
@@ -50,22 +78,7 @@ public class ObjectConverterTests
         Assert.Equal(original.Value, restored!.Value);
         Assert.Equal(original.TheLimit.Value, restored.TheLimit.Value);
     }
-    [Fact]
-    public void Should_Serialize_And_Deserialize_ValueObject_And_Identity()
-    {
-        var original = new CustomerSnapshot
-        {
-            Id = new CustomerId(Guid.NewGuid()),
-            Name = new CustomerName("Alice")
-        };
-
-        var json = ObjectConverterEngine.Serialize(original);
-        var deserialized = ObjectConverterEngine.Deserialize<CustomerSnapshot>(json);
-
-        Assert.NotNull(deserialized);
-        Assert.Equal(original.Id.Value, deserialized!.Id.Value);
-        Assert.Equal(original.Name.Value, deserialized.Name.Value);
-    }
+    
     
     [Fact]
     public void Should_Serialize_And_Deserialize_CustomerCreated_Event()

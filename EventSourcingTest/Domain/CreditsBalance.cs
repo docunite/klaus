@@ -1,7 +1,9 @@
+using System.Text.Json.Serialization;
 using EventSourcingTest.Infrastructure;
 
 namespace EventSourcingTest.Domain;
 
+[method: JsonConstructor]
 public class CreditsBalance(int value, LimitThreshold limit) : IntValueObject(value)
 {
     public bool IsTheSameBalance(CreditsBalance balance)
