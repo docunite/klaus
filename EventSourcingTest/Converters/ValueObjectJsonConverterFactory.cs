@@ -14,7 +14,7 @@ public class ValueObjectJsonConverterFactory : JsonConverterFactory
 
     public override JsonConverter? CreateConverter(Type type, JsonSerializerOptions options)
     {
-        var converterType = typeof(GeneralValueObjectJsonConverter<>).MakeGenericType(type);
+        var converterType = typeof(ValueObjectJsonConverter<>).MakeGenericType(type);
         return Activator.CreateInstance(converterType) as JsonConverter;
     }
 }

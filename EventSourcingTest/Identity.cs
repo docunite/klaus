@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+namespace EventSourcingTest;
+
 public abstract class Identity<T>
 {
     public T Value { get; }

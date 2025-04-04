@@ -1,3 +1,5 @@
+namespace EventSourcingTest.Infrastructure;
+
 public interface IDocuniteObjectConverter
 {
     string Serialize(object obj);

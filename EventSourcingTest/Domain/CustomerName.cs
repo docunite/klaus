@@ -1,4 +1,6 @@
-using EventSourcingTest.Domain;
+using EventSourcingTest.Infrastructure;
+
+namespace EventSourcingTest.Domain;
 
 public class CustomerName : StringValueObject
 {

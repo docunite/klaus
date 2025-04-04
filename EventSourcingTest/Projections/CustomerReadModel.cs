@@ -1,3 +1,5 @@
+namespace EventSourcingTest.Projections;
+
 public class CustomerReadModel
 {
     public string Id { get; set; } = default!;

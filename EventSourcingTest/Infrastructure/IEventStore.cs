@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
+namespace EventSourcingTest.Infrastructure;
+
 public interface IEventStore
 {
     Task SaveEvents(string streamId, IReadOnlyCollection<object> events, int expectedVersion);

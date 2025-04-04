@@ -1,3 +1,7 @@
+using EventSourcingTest.Snapshots;
+
+namespace EventSourcingTest.Domain;
+
 public class CustomerSnapshot
 {
     [Persisted]

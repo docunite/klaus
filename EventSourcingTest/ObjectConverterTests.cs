@@ -1,11 +1,16 @@
 using System;
+using EventSourcingTest.Converters;
 using EventSourcingTest.Domain;
+using EventSourcingTest.Events;
+using EventSourcingTest.Snapshots;
 using Xunit;
 
 namespace EventSourcingTest;
 
 public class SnapshotTests
 {
+   
+
     [Fact]
     public void Should_Serialize_And_Deserialize_CustomerAggregate_Using_PersistedAttribute()
     {
@@ -24,6 +29,8 @@ public class SnapshotTests
         // Assert
         Assert.Equal(customerId.Value, GetPrivateField<CustomerId>(restored, "_id").Value);
         Assert.Equal(customerName.Value, GetPrivateField<CustomerName>(restored, "_name").Value);
+        
+        Assert.True(aggregate.Balance.IsTheSameBalance(restored.Balance));
     }
 
     private static T GetPrivateField<T>(object obj, string fieldName)

@@ -1,3 +1,5 @@
+using EventSourcingTest.Infrastructure;
+
 namespace EventSourcingTest.Domain;
 
 public class LimitThreshold : IntValueObject

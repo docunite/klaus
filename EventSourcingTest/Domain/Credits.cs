@@ -1,6 +1,5 @@
+using EventSourcingTest.Infrastructure;
+
 namespace EventSourcingTest.Domain;
 
-public class Credits : IntValueObject
-{
-    public Credits(int value) : base(value) { }
-}
+public class Credits(int value) : IntValueObject(value);

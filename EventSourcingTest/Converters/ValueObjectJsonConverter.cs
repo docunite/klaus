@@ -6,7 +6,11 @@ using System.Reflection;
 
 namespace EventSourcingTest.Converters;
 
-public class GeneralValueObjectJsonConverter<TVO> : JsonConverter<TVO>
+using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+public class ValueObjectJsonConverter<TVO> : JsonConverter<TVO>
 {
     public override TVO? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

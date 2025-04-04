@@ -1,4 +1,7 @@
 using System.Text.Json.Serialization;
+using EventSourcingTest.Domain;
+
+namespace EventSourcingTest.Events;
 
 public class CustomerCreated
 {

@@ -1,7 +1,9 @@
 using System;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Reflection;
+
+namespace EventSourcingTest.Converters;
 
 public class IdentityJsonConverterFactory : JsonConverterFactory
 {

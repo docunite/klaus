@@ -1,35 +1,36 @@
 using System;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using EventSourcingTest.Converters;
 
-public static class ObjectConverterEngine
-{
-    public static string Serialize(object obj)
-    {
-        return JsonSerializer.Serialize(obj, obj.GetType(), JsonOptions());
-    }
+namespace EventSourcingTest.Converters;
 
-    public static object? Deserialize(string json, Type targetType)
+    public static class ObjectConverterEngine
     {
-        return JsonSerializer.Deserialize(json, targetType, JsonOptions());
-    }
-
-    public static T? Deserialize<T>(string json)
-    {
-        return JsonSerializer.Deserialize<T>(json, JsonOptions());
-    }
-
-    private static JsonSerializerOptions JsonOptions()
-    {
-        return new JsonSerializerOptions
+        public static string Serialize(object obj)
         {
-            PropertyNameCaseInsensitive = true,
-            Converters =
+            return JsonSerializer.Serialize(obj, obj.GetType(), JsonOptions());
+        }
+
+        public static object? Deserialize(string json, Type targetType)
+        {
+            return JsonSerializer.Deserialize(json, targetType, JsonOptions());
+        }
+
+        public static T? Deserialize<T>(string json)
+        {
+            return JsonSerializer.Deserialize<T>(json, JsonOptions());
+        }
+
+        private static JsonSerializerOptions JsonOptions()
+        {
+            return new JsonSerializerOptions
             {
-                new ValueObjectJsonConverterFactory(),  
-                new IdentityJsonConverterFactory()          
-            }
-        };
+                PropertyNameCaseInsensitive = true,
+                Converters =
+                {
+                    new ValueObjectJsonConverterFactory(),  
+                    new IdentityJsonConverterFactory()    ,
+                    new StandardTypeJsonConverterFactory()
+                }
+            };
+        }
     }
-}

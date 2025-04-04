@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+namespace EventSourcingTest;
+
 public abstract class ValueObject<T>
 {
     public T Value { get; }

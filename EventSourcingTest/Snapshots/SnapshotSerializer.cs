@@ -4,6 +4,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 
+namespace EventSourcingTest.Snapshots;
+
 public static class SnapshotSerializer
 {
     public static string Serialize(object aggregate)
